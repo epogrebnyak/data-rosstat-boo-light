@@ -84,7 +84,6 @@ def get_colname_dtypes():
 
 # stateless transformations
 
-
 def okved3(code_string):
     """Get 3 levels of OKVED codes from *code_string*."""
     codes = [int(x) for x in code_string.split(".")]

@@ -1,44 +1,28 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Nov 26 12:50:03 2016
-
-@author: Евгений
-"""
 import csv
-import os
 from itertools import islice
 from collections import OrderedDict
 
 import pandas as pd
 
-import config
-
+from settings import LocalCSV
 from inspect_columns import Columns
-from remote import RawDataset
 from row_parser import parse_row, get_parsed_colnames, get_colname_dtypes
-from folders import ParsedCSV
-from common import pipe, print_elapsed_time
+from logs import pipe, print_elapsed_time
 
-COLUMNS = Columns.COLUMNS
-RAW_CSV_FORMAT = dict(enc='windows-1251', sep=";")
-
-#
-# file location wrappers
-#
-
-def get_parsed_csv_path(year):
-   return ParsedCSV(year).filepath()
-
-   
-def get_raw_csv_path(year):
-   return RawDataset(year).get_filename()   
-
-#
-# row validation 
-#
-
+COLUMNS = ['year'] + Columns.COLUMNS
 VALID_ROW_WIDTH = len(COLUMNS)
 INN_POSITION = COLUMNS.index('inn')
+
+RAW_CSV_FORMAT = dict(enc='windows-1251', sep=";")
+
+def csv_stream(filename, enc='utf-8', sep=','):
+    """Emit CSV rows by filename."""
+    if enc not in ['utf-8', 'windows-1251']:
+        raise ValueError("Encoding not supported: " + str(enc))
+    with open(filename, 'r', encoding=enc) as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=sep)
+        for row in spamreader:
+            yield row
 
 def is_valid(row):
     """Return True if row is valid."""
@@ -52,59 +36,30 @@ def is_valid(row):
     else:
         return True
 
-
-#
-# column names
-#
-
-def emit_raw_colnames():
-    """Column names corresponding to emit_raw_rows()."""
-    return ['year'] + COLUMNS
-
-
-def emit_parsed_colnames():
-    return get_parsed_colnames()
-
-
 #
 # read, filter and parse raw csv
 #
 
-def csv_stream(filename, enc='utf-8', sep=','):
-    """Emit CSV rows by filename."""
-    if enc not in ['utf-8', 'windows-1251']:
-        raise ValueError("Encoding not supported: " + str(enc))
-    with open(filename, 'r', encoding=enc) as csvfile:
-        spamreader = csv.reader(csvfile, delimiter=sep)
-        for row in spamreader:
-            yield row
-
-
-def emit_raw_rows(year):
-    """Emit raw rows by year."""
-    fn = get_raw_csv_path(year)
-    raws = filter(is_valid, csv_stream(fn, **RAW_CSV_FORMAT))
+def add_year(year, incoming_gen):
     add_year = lambda row: [year] + row
-    return map(add_year, raws)
-
-
-def emit_raw_dicts(year):
-    columns = emit_raw_colnames()    
-    # lambda func allow to make inline fucntion with one arguement
-    as_dict = lambda row: OrderedDict(zip(columns, row))
-    return map(as_dict, emit_raw_rows(year))
-
+    return map(add_year, incoming_gen)
 
 def emit_rows(year):
-    gen = emit_raw_dicts(year)
-    return map(parse_row, gen)
+    """Emit raw rows by year."""
+    gen = csv_stream(LocalCSV(year).raw_path, **RAW_CSV_FORMAT)
+    rows = filter(is_valid, gen)
+    return add_year(year, rows)
 
-
-def emit_dicts(year):
-    columns = emit_parsed_colnames()
-    # lambda func allow to make inline fucntion with one arguement
+def emit_dicts(year, colnames = COLUMNS):
     as_dict = lambda row: OrderedDict(zip(columns, row))
     return map(as_dict, emit_rows(year))
+
+# TODO: start here
+
+def emit_parsed_dicts(year):
+    gen = emit_rows(year)
+    return map(parse_row, gen)
+
 
 
 #
@@ -122,50 +77,46 @@ def to_csv(path, stream, cols=None):
     return path
 
 
-def custom_df_reader(file):
-    """Read dataset as pandas dataframe using dtypes for faster import."""
-    if os.path.exists(file):
-        print("Reading file:", file)
-        # dtype on all columns shortens reading time
-        return pd.read_csv(file, dtype=get_colname_dtypes())
-    else:
-        raise FileNotFoundError(file)
-
-
 #
 # end user class for dataset access
 #
 
-class Dataset():
+# separate function():
 
+#        if not os.path.exists(self.output_csv) or force is True:
+#            msg = "\nSaving %s dataset..." % self.year            
+#            print(msg)
+#            to_csv(path=self.output_csv,
+#                   stream=self.__get_stream__(),
+#                   cols=self.__colnames__())
+#        else:
+#            print('{} dataset'.format(self.year),
+#                  'already saved as:', self.output_csv, "\n")
+
+
+class Dataset():
     def __init__(self, year):
-        self.year = year
+        self.year = year        
         self.output_csv = get_parsed_csv_path(year)
 
-    def __colnames__(self):
+    @property
+    def colnames(self):
         return get_parsed_colnames()
 
-    def __get_stream__(self):
-        return pipe(emit_rows(self.year))
+    def rows(self):
+        return pipe(emit_parsed_rows(self.year))
 
-    def to_csv(self, force=False):
-        if not os.path.exists(self.output_csv) or force is True:
-            msg = "\nSaving %s dataset..." % self.year            
-            print(msg)
-            to_csv(path=self.output_csv,
-                   stream=self.__get_stream__(),
-                   cols=self.__colnames__())
-        else:
-            print('{} dataset'.format(self.year),
-                  'already saved as:', self.output_csv, "\n")
+    # FIXME:
+    #def to_csv(self, force=False):
+        #to_csv(path, stream, cols=None):
 
     @print_elapsed_time
     def read_df(self):
         print("Reading {} dataframe...".format(self.year))
-        return custom_df_reader(self.output_csv)
+        return pd.read_csv(file, dtype=get_colname_dtypes()_
         
     def nth(self, n=0):
-        return next(islice(self.__get_stream__(), n, n + 1))
+        return next(islice(self.rows(), n, n + 1))
         
             
 

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import requests
 
-from settings import UNPACK_RAR_EXE, Storage
+from settings import UNPACK_RAR_EXE, Storage, LocalCSV
 
 
 def _download(url, path):
@@ -51,11 +51,11 @@ def download(year, force=False):
     s = Storage(year)
     url, path = s.url, s.rar_path
     if os.path.exists(path) and not force:
-        print("Already downloaded", path)
+        print(f"{year}: Already downloaded", path)
     else:
-        print("Downloading", url)
+        print(f"{year}: Downloading", url)
         _download(url, path)
-        print("Saved as", path)
+        print(f"{year}: Saved as", path)
     
 def unpack(year: int, force=False):
    # results in data/raw/YYYY.csv
@@ -63,17 +63,17 @@ def unpack(year: int, force=False):
    if not Path(s.rar_path).exists():
        raise FileNotFoundError(s.rar_path)
    unpacked = unpacked_csv_path(year)    
-   saved = s.raw_csv_path
+   saved = LocalCSV(year).raw_path
    if os.path.exists(saved) and not force:
-        print("Already unpacked as", saved)
+        print(f'{year}: Already unpacked raw CSV file as', saved)
    else:  
-       # cannot unpack to existing file
+       # cannot unpack to existing file, delete it
        if os.path.exists(unpacked):
            os.remove(unpacked)
        unrar(s.rar_path, s.rar_folder) 
-       # moving to data/raw/YYYY.csv
+       # moving csv file to data/raw/YYYY.csv
        os.rename(unpacked, saved)
-       print(f'Extracted {s.rar_path} as:\n{saved}')       
+       print(f"{year}: Extracted {s.rar_path} as:\n{saved}")       
      
 if __name__ == "__main__":
     download(2016)

@@ -37,26 +37,33 @@ class Storage:
     allowed_years = list(urls.keys())
     
     def __init__(self, year: int):
-        self.year = year
         try:
             self.url = self.urls[year]
         except KeyError:
             raise ValueError(f'{year} not in allowed years: {self.allowed_years}')
-        self.csv_filename = f'{year}.csv'
-    
+
     @property    
     def rar_path(self):
         return make_data_path('external', self.url.split('/')[-1])    
     
     @property      
     def rar_folder(self):
-        return make_data_path('external', '')        
+        return make_data_path('external', '')
     
-    @property      
-    def raw_csv_path(self):
+    
+class LocalCSV:
+    def __init__(self, year):
+        self.csv_filename = f'{year}.csv'
+        
+    @property    
+    def raw_path(self):
         return make_data_path('raw', self.csv_filename)
 
-    @property     
-    def interim_csv_path(self):
+    @property            
+    def interim_path(self):
         return make_data_path('interim', self.csv_filename)
+    
+    @property        
+    def processed_path(self):    
+        return make_data_path('processed', self.csv_filename)
 
