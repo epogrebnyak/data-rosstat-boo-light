@@ -1,87 +1,80 @@
 # -*- coding: utf-8 -*-
-"""Download and unpack CSV file from Rosstat web site."""
+"""Download and unpack CSV file from Rosstat web site:
 
-import requests
+   download(year)
+   unpack(year)
+
+"""
+
 import os
 import subprocess
+from pathlib import Path
 
-from folders import Folder
-from config import UNPACK_RAR_EXE, URL
+import requests
 
-class RawDataset():
-
-    def __init__(self, year):
-        self.year = year
-        self.url = URL[year]
-        # RAR file path
-        rar_filename = self.url.split('/')[-1]
-        self.rar_path = Folder('rar').filepath(rar_filename)
-        # Rosstat raw CSV file path
-        self._init_csv_filename()
-
-    def _init_csv_filename(self):
-        if os.path.exists(self.rar_path):
-            csv_filename = self._rar_content()
-            self.csv_path = Folder('raw_csv').filepath(csv_filename) 
-        else:
-            self.csv_path = ''
-
-    @staticmethod
-    def _download(url, path):
-        r = requests.get(url.strip(), stream=True)
-        with open(path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
-        return path
-
-    @staticmethod
-    def _unrar(path, folder):
-        subprocess.check_call([
-            UNPACK_RAR_EXE,
-            'e', path,
-            folder,
-            '-y'
-        ])
-
-    def _rar_content(self):
-        """Return single filename stored in RAR archive."""
-        return subprocess.check_output([
-            UNPACK_RAR_EXE,
-            'lb', self.rar_path]).decode("utf-8").strip()
-
-    # public methods download, unrar, get_filename
-    def download(self):
-        if os.path.exists(self.rar_path):
-            print("Already downloaded:", self.rar_path)
-        else:
-            print("Downloading:", self.url)
-            self._download(self.url, self.rar_path)
-            print("Saved as:", self.rar_path)
-            self._init_csv_filename()
-        return self
-
-    def unrar(self):
-        if os.path.exists(self.csv_path):
-            print("Already unpacked:", self.csv_path)
-        else:
-            print("Unpacking:", self.csv_path)
-            self._unrar(self.rar_path, folder=Folder('raw_csv').path())
-        return self.csv_path
-
-    # todo: change name to 'get_raw_csv_path' using IDE
-    def get_filename(self):
-        if os.path.exists(self.csv_path):
-            return self.csv_path
-        else:
-            msg = "Source CSV file for year {} not found. ".format(self.year) +\
-                  "\nUse RawDataset({}).download().unrar() to proceed.".format(self.year)
-            raise FileNotFoundError(msg)
+from settings import UNPACK_RAR_EXE, Storage
 
 
+def _download(url, path):
+    r = requests.get(url, stream=True)
+    with open(path, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=1024):
+            if chunk:  # filter out keep-alive new chunks
+                f.write(chunk)
+    return path
+
+def unrar(rar_file_path: str, folder:str, unrar_executable=UNPACK_RAR_EXE):
+    def mask_with_end_separator(folder):
+        """UnRAR wants its folder argument with '/'
+        """
+        return ("{}{}".format(folder, os.sep) 
+                if not folder.endswith(os.sep)
+                else folder)    
+    folder = mask_with_end_separator(folder)
+    job = [unrar_executable, 'e', rar_file_path, folder, '-y']
+    exit_code = subprocess.check_call(job)
+    return exit_code
+    
+
+def rar_content(rar_file_path: str, unrar_executable=UNPACK_RAR_EXE):
+    """Return single filename stored in RAR archive."""
+    job = [unrar_executable, 'lb', rar_file_path]
+    return subprocess.check_output(job).decode("utf-8").strip()
+
+def unpacked_csv_path(year):
+    s = Storage(year)
+    content = rar_content(s.rar_path)
+    filename = [fn for fn in content.split('\r\n') if fn.startswith('data')][0]       
+    return os.path.join(s.rar_folder, filename)
+
+def download(year, force=False):
+    s = Storage(year)
+    url, path = s.url, s.rar_path
+    if os.path.exists(path) and not force:
+        print("Already downloaded", path)
+    else:
+        print("Downloading", url)
+        _download(url, path)
+        print("Saved as", path)
+    
+def unpack(year: int, force=False):
+   # results in data/raw/YYYY.csv
+   s = Storage(year)
+   if not Path(s.rar_path).exists():
+       raise FileNotFoundError(s.rar_path)
+   unpacked = unpacked_csv_path(year)    
+   saved = s.raw_csv_path
+   if os.path.exists(saved) and not force:
+        print("Already unpacked as", saved)
+   else:  
+       # cannot unpack to existing file
+       if os.path.exists(unpacked):
+           os.remove(unpacked)
+       unrar(s.rar_path, s.rar_folder) 
+       # moving to data/raw/YYYY.csv
+       os.rename(unpacked, saved)
+       print(f'Extracted {s.rar_path} as:\n{saved}')       
+     
 if __name__ == "__main__":
-    # RawDataset(2012).download().unrar()
-    # RawDataset(2013).download().unrar()
-    # RawDataset(2014).download().unrar()
-    # RawDataset(2015).download().unrar()
-    print(RawDataset(2012).get_filename())
+    download(2016)
+    unpack(2016)
