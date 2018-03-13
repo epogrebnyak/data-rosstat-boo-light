@@ -65,7 +65,7 @@ How do we obtain processed CSV files?
 - Add headers to CSV
 - Save as local CSV file
 
-##### 3. Read local csv file as pandas dataframe
+#### 3. Read local csv file as pandas dataframe
 - Read dataframe using ```pd.read_csv``` with dtypes (it loads file faster)
 
 
