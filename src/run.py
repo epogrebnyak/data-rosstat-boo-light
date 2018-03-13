@@ -1,14 +1,22 @@
-from config import VALID_YEARS
-from remote import RawDataset
+"""
+WARNING: this script operates in files up to 1,6 Gb in size. 
+         This may slow down your machine and fail in case of 
+         memory overflow or disk space shortage.         
+         
+         In specific, Dataset(year).read_dataframe() is known 
+         to exhaust memory.
+         
+"""
+
+from remote import download, unpack
 from reader import Dataset
 
-Dataset(2015).to_csv(True)
+YEARS = [2012, 2013, 2014, 2015, 2016]
 
-#for year in VALID_YEARS:
-#    RawDataset(year).download().unrar()
-#    Dataset(year).to_csv(True) #to overwrite use .csv(force=True)
-
-
-# df = dict()
-# for year in VALID_YEARS:
-#     df[year] = Dataset(year).read_df()
+for year in YEARS:
+    download(year)
+    unpack(year)
+    Dataset(year).to_csv()    
+    
+# for year in YEARS:
+#     df[year] = Dataset(year).read_dataframe()

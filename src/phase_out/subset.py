@@ -29,7 +29,7 @@ def inn_filter(gen, include, exclude):
     
 def row_in_list(row, inn_list, found_msg):
     inn = row['inn']
-    if inn in inn_list:
+*    if inn in inn_list:
        print(found_msg, inn)
        return True
     else:

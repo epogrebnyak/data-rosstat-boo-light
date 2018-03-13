@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Directory structure and other configuration."""
 
 import platform
@@ -24,8 +23,10 @@ def make_data_path(subfolder: str, filename: str) -> str:
         folder.mkdir(parents=True)
     return str (folder / filename)
 
-# archives to download from Rosstat
+
 class Storage:
+    """Archives to download from Rosstat and filenames for them."""
+    
     urls = { 
      2012: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2012/data-20161021t000000-structure-20121231t000000.rar',
      2013: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2013/data-20161021t000000-structure-20131231t000000.rar',
@@ -44,7 +45,8 @@ class Storage:
 
     @property    
     def rar_path(self):
-        return make_data_path('external', self.url.split('/')[-1])    
+        filename = self.url.split('/')[-1]
+        return make_data_path('external', filename)    
     
     @property      
     def rar_folder(self):
@@ -67,3 +69,6 @@ class LocalCSV:
     def processed_path(self):    
         return make_data_path('processed', self.csv_filename)
 
+
+def tempfile(filename: str):
+    return make_data_path('temp', filename)    

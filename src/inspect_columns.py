@@ -6,9 +6,11 @@ Create hardcoded column names:
     Columns class
 
 """
+
 from collections import OrderedDict, namedtuple
 
 import pandas as pd
+import requests
 
 # urls and skip row offset
 Spec = namedtuple('Spec', ['url', 'offset'])
@@ -16,10 +18,14 @@ TTL_SPEC = {2016: Spec("http://www.gks.ru/opendata/storage/7708234640-bdboo2016/
             2015: Spec("http://www.gks.ru/opendata/storage/7708234640-bdboo2015/G2015.TTL", 9),
             2014: Spec("http://www.gks.ru/opendata/storage/7708234640-bdboo2014/G2014.TTL", 9),
             2013: Spec("http://www.gks.ru/opendata/storage/7708234640-bdboo2013/G2013.TTL", 9),
-            # 2012 was previously 8 
             2012: Spec("http://www.gks.ru/opendata/storage/7708234640-bdboo2012/G2012.TTL", 9)
             }
 
+def get_ttl(year):
+    url = TTL_SPEC[year].url
+    r = requests.get(url)
+    r.encoding = 'windows-1251'
+    return r.text.split('\r\n')
 
 def get_format(year):
     return dict(skiprows=TTL_SPEC[year].offset, 

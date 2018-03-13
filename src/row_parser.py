@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Nov 26 13:37:16 2016
 
-@author: Евгений
-"""
+from collections import OrderedDict
 from inspect_columns import Columns
-
 from numpy import int64 
 
 INT_TYPE = int64
@@ -30,7 +26,7 @@ def mln_to_thousand(x):
 #UNIT385_EXCLUSIONS = ex1 + ex2   
 
 
-def parse_row(rowd):
+def parse_row(rowd: OrderedDict):
     """Return modified *rowd* dictionary."""
 
     # assemble new text cols
@@ -41,7 +37,7 @@ def parse_row(rowd):
     # warning: 'date' may not be in rowd.keys() in some early datasets
     date_reviewed = rowd['date']
     
-    text = [rowd['year'], date_reviewed, ok1, ok2, ok3,
+    text = [date_reviewed, ok1, ok2, ok3,
             org, title, region, rowd['inn'],
             rowd['okpo'], rowd['okopf'], rowd['okfs'],
             rowd['unit']]
@@ -60,14 +56,14 @@ def parse_row(rowd):
         func = lambda x: x
     else:
         raise ValueError("Unit not supported: " + unit)
-    data = [func(rowd[k]) for k in Columns.DATACOLS]
 
-    return text+data
+    data = [func(rowd[k]) for k in Columns.DATACOLS]
+    return text + data
 
 
 def get_parsed_colnames():
     """Return colnames corresponding to parse_row(). """
-    return ['year', 'date', 'ok1', 'ok2', 'ok3',
+    return ['date', 'ok1', 'ok2', 'ok3',
             'org', 'title', 'region', 'inn',
             'okpo', 'okopf', 'okfs',
             'unit'] + Columns.RENAMED_DATACOLS
@@ -103,3 +99,10 @@ def dequote(name):
     else:
         title = name
     return org, title.strip()
+
+class RowParser:
+    dtypes = get_colname_dtypes()
+    colnames =  get_parsed_colnames()
+    
+    def dict_to_modified_row(rowd: OrderedDict):
+        return parse_row(rowd)
