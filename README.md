@@ -2,18 +2,14 @@
 
 The code allows to collect corporate reports and store them as CSV files for further analysis in R/pandas/Eviews.
 
+<!---
 **Easy path:** novice users can download smaller subsets of Rosstat data as csv/xlsx files (fewer variables, less companies, size 3-5Mb to 10-20Mb per year)
 
 **Hard way:** a more experienced user can reproduce a clean version of full Rosstat dataset on a local computer (300Mb-1.6Gb per year)
 
-
-Latest data:
-- http://www.gks.ru/opendata/dataset/7708234640-bdboo2016
-
-
 Parent repo (heavy commit history, hard to replicate):
 - https://github.com/epogrebnyak/data-rosstat-boo-2013
-
+-->
 
 Source data
 ===========
@@ -24,6 +20,9 @@ Source data
 Source dataset is a bit dirty:
  - a small part of rows uses different monetary units (rub and mln run instead of thousand rub)
  - several rows are corrupted in source files (see "Known bugs" below)
+
+Latest dataset (2016):
+- http://www.gks.ru/opendata/dataset/7708234640-bdboo2016
 
 Usage
 =====
