@@ -119,7 +119,7 @@ class Dataset:
     
     def to_csv(self):     
         if not os.path.exists(self.path):
-            print(f"(self.year): Saving large file to", self.path)
+            print(f"{self.year}: Saving large file to", self.path)
             to_csv(path = self.path,
                    stream = self.rows(),
                    cols = self.colnames)  
@@ -129,7 +129,8 @@ class Dataset:
     @print_elapsed_time
     def read_dataframe(self):
         print("Reading {} dataframe...".format(self.year))
-        return pd.read_csv(self.path, dtype=self.dtypes)
+        with open(self.path, 'r', encoding='windows-1251') as f:
+            return pd.read_csv(f, dtype=self.dtypes)
    
 
 class Subset:

@@ -47,15 +47,17 @@ def unpacked_csv_path(year):
     filename = [fn for fn in content.split('\r\n') if fn.startswith('data')][0]       
     return os.path.join(s.rar_folder, filename)
 
+
 def download(year, force=False):
     s = Storage(year)
     url, path = s.url, s.rar_path
     if os.path.exists(path) and not force:
-        print(f"{year}: Already downloaded", path)
+        prefix = f'{year}:'
+        print(prefix, "Already downloaded", path)
     else:
-        print(f"{year}: Downloading", url)
+        print(prefix, "Downloading", url)
         _download(url, path)
-        print(f"{year}: Saved as", path)
+        print(prefix, "Saved", path)
     
 def unpack(year: int, force=False):
    # results in data/raw/YYYY.csv
@@ -65,7 +67,8 @@ def unpack(year: int, force=False):
    unpacked = unpacked_csv_path(year)    
    saved = LocalCSV(year).raw_path
    if os.path.exists(saved) and not force:
-        print(f'{year}: Already unpacked raw CSV file as', saved)
+        prefix = f'{year}:'
+        print(prefix, 'Already unpacked raw CSV file as', saved)
    else:  
        # cannot unpack to existing file, delete it
        if os.path.exists(unpacked):
@@ -73,7 +76,7 @@ def unpack(year: int, force=False):
        unrar(s.rar_path, s.rar_folder) 
        # moving csv file to data/raw/YYYY.csv
        os.rename(unpacked, saved)
-       print(f"{year}: Extracted {s.rar_path} as:\n{saved}")       
+       print(prefix, 'Extracted {s.rar_path} as:\n{saved}')       
      
 if __name__ == "__main__":
     download(2016)
