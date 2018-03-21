@@ -58,11 +58,11 @@ class RawDataset:
     def colnames(self):
         return Columns.COLUMNS
 
-    def _rows(self):
+    def get_rows(self):
         path = LocalCSV(self.year).raw_path
         return csv_stream(path)
 
-    def _dicts(self):
+    def get_dicts(self):
         as_dict = lambda row: OrderedDict(zip(self.colnames, row))
         return map(as_dict, self.rows())
 
@@ -71,14 +71,14 @@ class RawDataset:
         return len(row) == VALID_ROW_WIDTH
     
     def rows(self):
-        return filter(self.has_valid_length, self._rows())    
+        return filter(self.has_valid_length, self.get_rows())    
     
     @staticmethod
     def has_inn(d):
         return d['inn']
     
     def dicts(self):        
-        return filter(self.has_inn, self._dicts())
+        return filter(self.has_inn, self.get_dicts())
 
     
 class Dataset:
@@ -129,7 +129,7 @@ class Dataset:
     @print_elapsed_time
     def read_dataframe(self):
         print("Reading {} dataframe...".format(self.year))
-        with open(self.path, 'r', encoding='windows-1251') as f:
+        with open(self.path, 'r', encoding='utf-8') as f:
             return pd.read_csv(f, dtype=self.dtypes)
    
 
@@ -160,10 +160,17 @@ class Subset:
         
      
 if __name__ == "__main__":
+    # create model dataset 
+    stream = list(islice(RawDataset(2012).rows(), 0, 500))
+    path = tempfile('reference_dataset.txt')
+    to_csv(path, stream, cols=None)
+    # TODO: place at 
+    
+    
     #Subset(2015, 'test1').to_csv()     
     d = Dataset(2012)
     a = next(Dataset(2016).dicts())
-    z = next(RawDataset(2016)._rows())
+    z = next(RawDataset(2016).get_rows())
     import random
     ix = [random.choice(range(100)) for _ in range(5)]
     inns = [d.nth_dict(i)['inn'] for i in ix]

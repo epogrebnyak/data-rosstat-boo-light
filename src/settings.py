@@ -28,6 +28,7 @@ class Storage:
     """Archives to download from Rosstat and filenames for them."""
     
     urls = { 
+        0: 'http://s3.eu-central-1.amazonaws.com/boo2012/data_reference.rar',    
      2012: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2012/data-20161021t000000-structure-20121231t000000.rar',
      2013: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2013/data-20161021t000000-structure-20131231t000000.rar',
      2014: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2014/data-20161021t000000-structure-20141231t000000.rar',

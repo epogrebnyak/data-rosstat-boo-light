@@ -44,15 +44,19 @@ def rar_content(rar_file_path: str, unrar_executable=UNPACK_RAR_EXE):
 def unpacked_csv_path(year):
     s = Storage(year)
     content = rar_content(s.rar_path)
-    filename = [fn for fn in content.split('\r\n') if fn.startswith('data')][0]       
+    filenames = content.split('\r\n')
+    try:
+        filename = [fn for fn in content.split('\r\n') if fn.startswith('data')][0]       
+    except IndexError:
+        raise ValueError(f'No datafile in {filenames}')
     return os.path.join(s.rar_folder, filename)
 
 
 def download(year, force=False):
     s = Storage(year)
     url, path = s.url, s.rar_path
+    prefix = f'{year}:'
     if os.path.exists(path) and not force:
-        prefix = f'{year}:'
         print(prefix, "Already downloaded", path)
     else:
         print(prefix, "Downloading", url)
@@ -66,8 +70,8 @@ def unpack(year: int, force=False):
        raise FileNotFoundError(s.rar_path)
    unpacked = unpacked_csv_path(year)    
    saved = LocalCSV(year).raw_path
+   prefix = f'{year}:'
    if os.path.exists(saved) and not force:
-        prefix = f'{year}:'
         print(prefix, 'Already unpacked raw CSV file as', saved)
    else:  
        # cannot unpack to existing file, delete it
