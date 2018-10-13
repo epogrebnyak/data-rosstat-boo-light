@@ -2,7 +2,7 @@
 """Functions for other modules (screen messages and error logger)."""
 
 import time
-import config
+#import config
 
 
 def print_elapsed_time(foo):

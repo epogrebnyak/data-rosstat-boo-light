@@ -12,7 +12,7 @@ from remote import download, unpack
 from reader import Dataset
 
 #YEARS = [2012, 2013, 2014, 2015, 2016]
-YEARS = [0]
+YEARS = [2012]
 
 for year in YEARS:
     download(year)
