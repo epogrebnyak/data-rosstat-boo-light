@@ -37,3 +37,5 @@ def dicts_to_csv(path, dict_stream, column_names):
         for d in dict_stream: 
             print('Wrote to file:', d)
             writer.writerow(d)
+            
+            

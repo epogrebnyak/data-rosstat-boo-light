@@ -2,12 +2,11 @@
 
 import requests
 import os
-import platform
-from settings import url, url_local_path
-
+from settings import PROJECT_ROOT
 
 URL = { 
-        0: 'http://s3.eu-central-1.amazonaws.com/boo2012/data_reference.rar',    
+     # FIXME   
+     #   0: 'http://s3.eu-central-1.amazonaws.com/boo2012/data_reference.rar',    
      2012: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2012/data-20181029t000000-structure-20121231t000000.csv',
      2013: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2013/data-20181029t000000-structure-20131231t000000.csv',
      2014: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2014/data-20181029t000000-structure-20141231t000000.csv',
@@ -15,17 +14,35 @@ URL = {
      2016: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2016/data-20181029t000000-structure-20161231t000000.csv',
      2017: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2017/data-20181029t000000-structure-20171231t000000.csv',
     }
-
-
-IS_WINDOWS = (platform.system() == 'Windows')
-
-# RAR executable
-if IS_WINDOWS:
-    UNPACK_RAR_EXE = str(PROJECT_ROOT / 'bin' / 'unrar.exe')
-else:
-    UNPACK_RAR_EXE = 'unrar'
     
-def _download(url: str, path: str):
+def url(year: int): 
+    return URL.get(year)
+
+
+def data_folder(root=PROJECT_ROOT):
+    folder = root / 'data' 
+    if not folder.exists():
+        folder.mkdir(parents=True)
+    return folder
+
+
+def path(tag, year: int):    
+    return data_folder() / f'{tag}-{year}.csv'
+
+
+def raw(year: int):
+    return path("rosstat", year)
+
+
+def interim(year: int):
+    return path("interim", year)
+
+
+def processed(year: int):
+    return path("processed", year)    
+
+
+def curl(url: str, path: str):
     r = requests.get(url, stream=True)
     with open(path, 'wb') as f:
         for chunk in r.iter_content(chunk_size=1024):
@@ -34,20 +51,24 @@ def _download(url: str, path: str):
     return path
 
 
-def download(year, force=False):    
-    url = URL.get(year) 
-    _path = url_local_path(year)
-    if os.path.exists(_path) and not force:
-        print(year, "Already downloaded", _path)
-    else:
-        print(year, "Downloading", _url)
-        _download(_url, _path)
-        print(year, "Saved", _path)
+def messenger(year):
+    prefix = "(%s)" % year
+    def foo(*args):
+        print (prefix, *args)
+    return foo
 
-        
-def download_force(year: int):
-            
-        
+
+def download(year: int, force=False):    
+    u = url(year) 
+    p = raw(year)
+    echo = messenger(year)
+    if os.path.exists(p) and not force:
+        echo("Already downloaded", "\n    URL was", u, "\n    Local path is", p)
+    else:
+        echo("Downloading from", u)
+        curl(u, p)
+        echo("Saved at", p)
+
         
 if __name__ == "__main__":
     download(2012)
@@ -55,4 +76,4 @@ if __name__ == "__main__":
     #download(2014)
     #download(2015)
     #download(2016)
-    #download(2017)
+    download(2017)
