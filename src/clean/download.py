@@ -2,9 +2,11 @@
 
 import requests
 import os
-from settings import PROJECT_ROOT
+import file
+import util
 
-URL = { 
+def url(year):
+    return { 
      # FIXME   
      #   0: 'http://s3.eu-central-1.amazonaws.com/boo2012/data_reference.rar',    
      2012: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2012/data-20181029t000000-structure-20121231t000000.csv',
@@ -13,33 +15,7 @@ URL = {
      2015: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2015/data-20181029t000000-structure-20151231t000000.csv',
      2016: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2016/data-20181029t000000-structure-20161231t000000.csv',
      2017: 'http://www.gks.ru/opendata/storage/7708234640-bdboo2017/data-20181029t000000-structure-20171231t000000.csv',
-    }
-    
-def url(year: int): 
-    return URL.get(year)
-
-
-def data_folder(root=PROJECT_ROOT):
-    folder = root / 'data' 
-    if not folder.exists():
-        folder.mkdir(parents=True)
-    return folder
-
-
-def path(tag, year: int):    
-    return data_folder() / f'{tag}-{year}.csv'
-
-
-def raw(year: int):
-    return path("rosstat", year)
-
-
-def interim(year: int):
-    return path("interim", year)
-
-
-def processed(year: int):
-    return path("processed", year)    
+    }[year]
 
 
 def curl(url: str, path: str):
@@ -48,20 +24,11 @@ def curl(url: str, path: str):
         for chunk in r.iter_content(chunk_size=1024):
             if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
-    return path
-
-
-def messenger(year):
-    prefix = "(%s)" % year
-    def foo(*args):
-        print (prefix, *args)
-    return foo
-
 
 def download(year: int, force=False):    
     u = url(year) 
-    p = raw(year)
-    echo = messenger(year)
+    p = file.raw(year)
+    echo = util.messenger(year)
     if os.path.exists(p) and not force:
         echo("Already downloaded", "\n    URL was", u, "\n    Local path is", p)
     else:

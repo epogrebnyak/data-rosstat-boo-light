@@ -1,7 +1,7 @@
 """Generic CSV file read and write operations."""
 
 import csv
-#from logs import print_elapsed_time
+import os
 
 FMT = dict(lineterminator="\n", quoting=csv.QUOTE_MINIMAL)
 
@@ -20,21 +20,21 @@ def _open(path):
     return open(path, 'w', encoding="utf-8")
 
 #@print_elapsed_time
-def save_rows(path, stream, cols=None):
+def save_rows(path, stream, column_names=None):
     with _open(path) as file:
         writer = csv.writer(file, **FMT)
-        if cols:
-            writer.writerow(cols)
+        if column_names:
+            writer.writerow(column_names)
         writer.writerows(stream)
-    print("Saved file:", path)
 
 
 #@print_elapsed_time
 def save_dicts(path, dict_stream, column_names):
+    if os.path.exists(path):
+        raise Exception("%s already exists" % path)
     with _open(path) as file:
         writer = csv.DictWriter(file, fieldnames=column_names, **FMT)
         for d in dict_stream: 
-            print('Wrote to file:', d)
             writer.writerow(d)
             
             
